@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Scale } from 'lucide-react';
@@ -43,7 +44,10 @@ export default function LoginPage() {
                 className='w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500' />
             </div>
             <div>
-              <label className='block text-sm font-medium text-slate-300 mb-1.5'>Password</label>
+              <div className='flex items-center justify-between mb-1.5'>
+                <label className='block text-sm font-medium text-slate-300'>Password</label>
+                <Link href='/forgot-password' className='text-xs text-indigo-400 hover:text-indigo-300'>Forgot password?</Link>
+              </div>
               <input type='password' value={password} onChange={e => setPassword(e.target.value)} required placeholder='••••••••'
                 className='w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500' />
             </div>
@@ -53,6 +57,9 @@ export default function LoginPage() {
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
+          <p className='text-slate-400 text-sm mt-6 text-center'>
+            New here? <Link href='/signup' className='text-indigo-400 hover:text-indigo-300'>Create an account</Link>
+          </p>
         </div>
       </div>
     </div>

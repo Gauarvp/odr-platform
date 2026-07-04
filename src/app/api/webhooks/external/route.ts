@@ -100,13 +100,15 @@ export async function POST(request: NextRequest) {
       if (signupError || !user) {
         return NextResponse.json({ error: 'Failed to create claimant account' }, { status: 500 });
       }
-      await supabase.from('user_profiles').insert({
+      // The on_auth_user_created trigger creates a default profile;
+      // upsert to attach the caller's org and name.
+      await supabase.from('user_profiles').upsert({
         id: user.id,
         org_id: auth.orgId,
         role: 'claimant',
         full_name: claimant_name ?? claimant_email,
         email: claimant_email,
-      });
+      }, { onConflict: 'id' });
       claimantId = user.id;
     }
 

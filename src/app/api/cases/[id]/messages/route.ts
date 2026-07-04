@@ -3,6 +3,30 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { requireAuth } from '@/lib/supabase/server';
 import { logCaseEvent } from '@/lib/audit';
+import type { UserProfile } from '@/lib/types';
+
+// Room-level access control. RLS only scopes to case parties;
+// private caucus rooms need per-room checks on top of that.
+function canAccessRoom(
+  user: UserProfile,
+  roomKey: string,
+  c: { claimant_id: string; respondent_id: string | null; assigned_mediator_id: string | null; assigned_arbitrator_id: string | null },
+): boolean {
+  if (['case_manager', 'org_admin', 'platform_admin'].includes(user.role)) return true;
+  const isNeutral = user.id === c.assigned_mediator_id || user.id === c.assigned_arbitrator_id;
+  switch (roomKey) {
+    case 'joint':
+      return true; // any case party (RLS already scopes to parties)
+    case 'claimant_private':
+      return user.id === c.claimant_id || isNeutral;
+    case 'respondent_private':
+      return user.id === c.respondent_id || isNeutral;
+    case 'mediator':
+      return isNeutral;
+    default:
+      return false;
+  }
+}
 
 export async function GET(
   request: NextRequest,
@@ -25,6 +49,15 @@ export async function GET(
       .single();
 
     if (roomError || !room) return NextResponse.json({ error: 'Room not found' }, { status: 404 });
+
+    const { data: caseRow } = await supabase
+      .from('cases')
+      .select('claimant_id, respondent_id, assigned_mediator_id, assigned_arbitrator_id')
+      .eq('id', id)
+      .single();
+    if (!caseRow || !canAccessRoom(user, roomKey, caseRow)) {
+      return NextResponse.json({ error: 'You do not have access to this room' }, { status: 403 });
+    }
 
     let query = supabase
       .from('messages')
@@ -69,6 +102,15 @@ export async function POST(
       .from('message_rooms').select('*').eq('case_id', id).eq('room_key', room_key).single();
 
     if (roomError || !room) return NextResponse.json({ error: 'Room not found' }, { status: 404 });
+
+    const { data: caseRow } = await supabase
+      .from('cases')
+      .select('claimant_id, respondent_id, assigned_mediator_id, assigned_arbitrator_id')
+      .eq('id', id)
+      .single();
+    if (!caseRow || !canAccessRoom(user, room_key, caseRow)) {
+      return NextResponse.json({ error: 'You do not have access to this room' }, { status: 403 });
+    }
 
     const { data: message, error } = await supabase
       .from('messages')

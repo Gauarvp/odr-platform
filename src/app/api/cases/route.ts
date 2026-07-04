@@ -33,7 +33,9 @@ export async function GET(request: NextRequest) {
     if (status) query = query.eq('status', status);
     if (category) query = query.eq('category', category);
     if (search) {
-      query = query.or(`title.ilike.%${search}%,case_number.ilike.%${search}%`);
+      // Strip characters with meaning in PostgREST filter syntax
+      const safe = search.replace(/[,()%\\]/g, ' ').trim();
+      if (safe) query = query.or(`title.ilike.%${safe}%,case_number.ilike.%${safe}%`);
     }
 
     // RLS handles access control — users only see their cases
@@ -141,7 +143,7 @@ export async function POST(request: NextRequest) {
         name: 'Mediator Notes',
         room_key: 'mediator',
         is_private: true,
-        allowed_roles: ['claimant', 'respondent'],
+        allowed_roles: ['mediator', 'arbitrator'],
       },
     ]);
 

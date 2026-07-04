@@ -21,7 +21,11 @@ export async function middleware(request: NextRequest) {
   );
   const { data: { user } } = await supabase.auth.getUser();
   const { pathname } = request.nextUrl;
-  if (pathname.startsWith('/login') || pathname.startsWith('/api')) return supabaseResponse;
+  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/forgot-password');
+  if (user && isAuthPage) return NextResponse.redirect(new URL('/dashboard', request.url));
+  // /reset-password must work for both states: the recovery link arrives
+  // unauthenticated, then the code exchange signs the user in mid-page.
+  if (isAuthPage || pathname.startsWith('/reset-password') || pathname.startsWith('/api')) return supabaseResponse;
   if (!user) return NextResponse.redirect(new URL('/login', request.url));
   return supabaseResponse;
 }

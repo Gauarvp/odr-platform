@@ -11,6 +11,17 @@ import type {
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const MODEL = 'claude-sonnet-4-5';
 
+// Models sometimes wrap JSON in ```json fences or add a preamble
+// despite instructions — extract the outermost object before parsing.
+function parseJsonResponse<T>(text: string): T {
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  const candidate = fenced ? fenced[1] : text;
+  const start = candidate.indexOf('{');
+  const end = candidate.lastIndexOf('}');
+  if (start === -1 || end === -1) throw new Error('No JSON object in AI response');
+  return JSON.parse(candidate.slice(start, end + 1)) as T;
+}
+
 // ─── 1. CASE TRIAGE ────────────────────────────────────────────
 // Analyzes a newly filed dispute and recommends track, key issues, risk factors.
 
@@ -61,7 +72,7 @@ Be conservative with complexity — only escalate if genuinely warranted.`;
   });
 
   const text = response.content[0].type === 'text' ? response.content[0].text : '';
-  return JSON.parse(text) as AITriageResult;
+  return parseJsonResponse<AITriageResult>(text);
 }
 
 // ─── 2. OUTCOME PREDICTION ─────────────────────────────────────
@@ -133,7 +144,7 @@ Be calibrated — avoid extreme confidence. Settlement is typically the most lik
   });
 
   const text = response.content[0].type === 'text' ? response.content[0].text : '';
-  return JSON.parse(text) as AIOutcomePrediction;
+  return parseJsonResponse<AIOutcomePrediction>(text);
 }
 
 // ─── 3. DOCUMENT ANALYSIS ──────────────────────────────────────
@@ -186,7 +197,7 @@ Be neutral. Do not advocate for either party. Flag inconsistencies or missing in
   });
 
   const text = response.content[0].type === 'text' ? response.content[0].text : '';
-  return JSON.parse(text) as DocumentAnalysis;
+  return parseJsonResponse<DocumentAnalysis>(text);
 }
 
 // ─── 4. MEDIATOR ASSIST ────────────────────────────────────────
@@ -251,7 +262,7 @@ Focus on practical interventions. Avoid legal conclusions.`;
   });
 
   const text = response.content[0].type === 'text' ? response.content[0].text : '';
-  return JSON.parse(text) as MediatorAssistOutput;
+  return parseJsonResponse<MediatorAssistOutput>(text);
 }
 
 // ─── 5. SETTLEMENT DRAFTER ─────────────────────────────────────
@@ -360,5 +371,5 @@ Return raw JSON only:
   });
 
   const text = response.content[0].type === 'text' ? response.content[0].text : '';
-  return JSON.parse(text) as AIOfferSuggestion;
+  return parseJsonResponse<AIOfferSuggestion>(text);
 }

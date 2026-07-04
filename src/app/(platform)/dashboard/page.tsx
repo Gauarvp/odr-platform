@@ -48,8 +48,8 @@ export default function DashboardPage() {
       icon: Scale,
       color: 'text-indigo-600',
       bg: 'bg-indigo-50',
-      change: '+3 this week',
-      up: true,
+      change: `${metrics.cases_filed ?? 0} filed total`,
+      up: null,
     },
     {
       label: 'Avg Resolution',
@@ -66,8 +66,8 @@ export default function DashboardPage() {
       icon: CheckCircle2,
       color: 'text-emerald-600',
       bg: 'bg-emerald-50',
-      change: '+2.3% this month',
-      up: true,
+      change: `${metrics.cases_resolved ?? 0} resolved`,
+      up: null,
     },
     {
       label: 'Cost Savings',

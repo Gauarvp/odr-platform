@@ -183,6 +183,26 @@ Response:
 
 ---
 
+## Local Development (recommended first)
+
+Requires Docker Desktop.
+
+```bash
+npm install
+npx supabase start          # boots local Postgres/Auth/Storage, applies migrations
+# Copy the printed API URL + anon key + service_role key into .env.local
+npm run seed                # demo org, 6 demo users (password: demo1234), 2 sample cases
+npm run dev                 # http://localhost:3000
+```
+
+Demo accounts after seeding: `admin@demo.odr`, `manager@demo.odr`, `mediator@demo.odr`,
+`arbitrator@demo.odr`, `alice@demo.odr` (claimant), `bob@demo.odr` (respondent).
+
+Self-serve signup is available at `/signup` — new users get a profile automatically
+(via the `on_auth_user_created` trigger) in the demo organisation.
+
+---
+
 ## Deploy Guide
 
 ### 1. Supabase setup

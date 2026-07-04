@@ -58,6 +58,8 @@ export default function CaseDetailPage() {
 
   useEffect(() => {
     loadMessages();
+    const poll = setInterval(loadMessages, 5000);
+    return () => clearInterval(poll);
   }, [activeRoom]);
 
   useEffect(() => {
@@ -74,6 +76,8 @@ export default function CaseDetailPage() {
     if (res.ok) {
       const data = await res.json();
       setMessages(data.messages ?? []);
+    } else if (res.status === 403) {
+      setMessages([]);
     }
   };
 
